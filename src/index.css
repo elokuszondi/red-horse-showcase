@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 0 85% 60%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -36,20 +37,19 @@
 
     --radius: 0.5rem;
 
+    --ferrari-red: 0 85% 60%;
+    --ferrari-dark-red: 0 70% 45%;
+    --ferrari-yellow: 45 100% 55%;
+    --ferrari-black: 220 13% 9%;
+    --ferrari-silver: 210 9% 78%;
+
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -63,8 +63,8 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 0 85% 60%;
+    --primary-foreground: 210 40% 98%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -99,5 +99,50 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .ferrari-gradient {
+    background: linear-gradient(135deg, hsl(var(--ferrari-red)) 0%, hsl(var(--ferrari-dark-red)) 100%);
+  }
+  
+  .text-ferrari-red {
+    color: hsl(var(--ferrari-red));
+  }
+  
+  .bg-ferrari-red {
+    background-color: hsl(var(--ferrari-red));
+  }
+  
+  .text-ferrari-yellow {
+    color: hsl(var(--ferrari-yellow));
+  }
+  
+  .bg-ferrari-yellow {
+    background-color: hsl(var(--ferrari-yellow));
+  }
+  
+  .text-ferrari-black {
+    color: hsl(var(--ferrari-black));
+  }
+  
+  .bg-ferrari-black {
+    background-color: hsl(var(--ferrari-black));
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
