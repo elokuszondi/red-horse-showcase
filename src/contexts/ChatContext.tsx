@@ -1,6 +1,6 @@
-
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useSavedChats } from '@/contexts/SavedChatsContext';
+import { usePersistentChat } from '@/contexts/PersistentChatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThinkTankAIService } from '@/services/thinkTankAI';
 import { sessionManager, type ChatSession } from '@/services/sessionManager';
@@ -48,43 +48,56 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
 
   const { saveCurrentChat } = useSavedChats();
+  const { 
+    currentMessages, 
+    currentChatId, 
+    addMessageToCurrentChat, 
+    createNewChat, 
+    updateCurrentChatTitle 
+  } = usePersistentChat();
   const { user } = useAuth();
 
-  // Initialize session management
+  // Sync messages with persistent chat when available
+  useEffect(() => {
+    if (user && currentMessages.length > 0) {
+      setMessages(currentMessages);
+    } else if (!user) {
+      // For non-authenticated users, keep using session-based messages
+    }
+  }, [currentMessages, user]);
+
+  // Initialize session management for non-authenticated users
   useEffect(() => {
     const initializeSession = async () => {
-      if (user) {
-        // Load user sessions from database
-        await sessionManager.loadUserSessions(user.id);
-      }
+      if (!user) {
+        // Only use session manager for non-authenticated users
+        let session = sessionManager.getCurrentSession();
+        if (!session) {
+          session = sessionManager.createSession(null);
+        }
 
-      // Get or create current session
-      let session = sessionManager.getCurrentSession();
-      if (!session) {
-        session = sessionManager.createSession(user?.id || null);
-      }
-
-      setCurrentSession(session);
-      
-      // Convert session history to messages
-      if (session.conversationHistory.length > 0) {
-        const sessionMessages: Message[] = [];
-        session.conversationHistory.forEach((item, index) => {
-          sessionMessages.push({
-            id: `${item.timestamp}_user_${index}`,
-            content: item.query,
-            sender: 'user',
-            timestamp: new Date(item.timestamp)
+        setCurrentSession(session);
+        
+        // Convert session history to messages for non-authenticated users
+        if (session.conversationHistory.length > 0 && messages.length === 0) {
+          const sessionMessages: Message[] = [];
+          session.conversationHistory.forEach((item, index) => {
+            sessionMessages.push({
+              id: `${item.timestamp}_user_${index}`,
+              content: item.query,
+              sender: 'user',
+              timestamp: new Date(item.timestamp)
+            });
+            sessionMessages.push({
+              id: `${item.timestamp}_ai_${index}`,
+              content: item.response,
+              sender: 'ai',
+              timestamp: new Date(item.timestamp + 1000),
+              metadata: item.metadata
+            });
           });
-          sessionMessages.push({
-            id: `${item.timestamp}_ai_${index}`,
-            content: item.response,
-            sender: 'ai',
-            timestamp: new Date(item.timestamp + 1000),
-            metadata: item.metadata
-          });
-        });
-        setMessages(sessionMessages);
+          setMessages(sessionMessages);
+        }
       }
     };
 
@@ -96,21 +109,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 60 * 60 * 1000); // Every hour
 
     return () => clearInterval(cleanup);
-  }, [user]);
+  }, [user, messages.length]);
 
-  // Auto-save session when messages change (for legacy compatibility)
+  // Auto-save for legacy compatibility (non-authenticated users)
   useEffect(() => {
-    if (messages.length > 0 && user) {
+    if (messages.length > 0 && !user) {
       saveCurrentChat(messages);
     }
   }, [messages, saveCurrentChat, user]);
 
   const sendMessage = useCallback(async (content: string, files?: UploadedFile[]) => {
-    if (!user && !currentSession) {
-      console.error('No session available for message');
-      return;
-    }
-
     const userId = user?.id || 'anonymous';
 
     if (!content.trim()) {
@@ -125,7 +133,18 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       files: files?.length ? files : undefined,
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    // For authenticated users, create a new chat if none exists
+    if (user && !currentChatId) {
+      await createNewChat();
+    }
+
+    // Add user message to appropriate storage
+    if (user && currentChatId) {
+      await addMessageToCurrentChat('user', userMessage.content, userMessage.metadata);
+    } else {
+      setMessages(prev => [...prev, userMessage]);
+    }
+
     setIsTyping(true);
 
     try {
@@ -145,11 +164,24 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       };
 
-      setMessages(prev => [...prev, aiMessage]);
+      // Add AI message to appropriate storage
+      if (user && currentChatId) {
+        await addMessageToCurrentChat('assistant', aiMessage.content, aiMessage.metadata);
+        
+        // Update chat title if this is the first exchange
+        if (currentMessages.length <= 2) { // User message + AI response
+          const title = userMessage.content.slice(0, 50) + (userMessage.content.length > 50 ? '...' : '');
+          await updateCurrentChatTitle(title);
+        }
+      } else {
+        setMessages(prev => [...prev, aiMessage]);
+      }
 
-      // Update current session state
-      const updatedSession = sessionManager.getCurrentSession();
-      setCurrentSession(updatedSession);
+      // Update current session state for non-authenticated users
+      if (!user) {
+        const updatedSession = sessionManager.getCurrentSession();
+        setCurrentSession(updatedSession);
+      }
       
     } catch (error) {
       console.error('Think Tank AI error:', error);
@@ -173,11 +205,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, aiMessage]);
+      // Add error message to appropriate storage
+      if (user && currentChatId) {
+        await addMessageToCurrentChat('assistant', aiMessage.content);
+      } else {
+        setMessages(prev => [...prev, aiMessage]);
+      }
     } finally {
       setIsTyping(false);
     }
-  }, [user, currentSession]);
+  }, [user, currentChatId, currentMessages.length, addMessageToCurrentChat, createNewChat, updateCurrentChatTitle]);
 
   const retryLastMessage = useCallback(async () => {
     const lastUserMessage = [...messages].reverse().find(msg => msg.sender === 'user');
@@ -199,13 +236,18 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setMessages([]);
   }, []);
 
-  const startNewConversation = useCallback(() => {
-    const userId = user?.id || null;
-    const newSession = sessionManager.createSession(userId);
-    setCurrentSession(newSession);
-    setMessages([]);
-    console.log('Started new conversation:', newSession.id);
-  }, [user]);
+  const startNewConversation = useCallback(async () => {
+    if (user) {
+      // For authenticated users, create a new persistent chat
+      await createNewChat();
+    } else {
+      // For non-authenticated users, use session manager
+      const newSession = sessionManager.createSession(null);
+      setCurrentSession(newSession);
+      setMessages([]);
+      console.log('Started new conversation:', newSession.id);
+    }
+  }, [user, createNewChat]);
 
   const loadConversation = useCallback(async (sessionId: string) => {
     try {
@@ -258,3 +300,5 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </ChatContext.Provider>
   );
 };
+
+export default ChatProvider;

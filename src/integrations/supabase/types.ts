@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      analytics_data: {
+        Row: {
+          chart_data: Json
+          confidence_score: number | null
+          created_at: string | null
+          data_type: string
+          description: string | null
+          id: string
+          insights: string[] | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chart_data?: Json
+          confidence_score?: number | null
+          created_at?: string | null
+          data_type: string
+          description?: string | null
+          id?: string
+          insights?: string[] | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chart_data?: Json
+          confidence_score?: number | null
+          created_at?: string | null
+          data_type?: string
+          description?: string | null
+          id?: string
+          insights?: string[] | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_configurations: {
         Row: {
           config_name: string
@@ -69,6 +108,41 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          chat_id: string
+          content: string
+          id: string
+          metadata: Json | null
+          role: string
+          timestamp: string | null
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          id?: string
+          metadata?: Json | null
+          role: string
+          timestamp?: string | null
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          id?: string
+          metadata?: Json | null
+          role?: string
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "user_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chats: {
         Row: {
           created_at: string
@@ -92,6 +166,96 @@ export type Database = {
           messages?: Json
           title?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      internal_documents: {
+        Row: {
+          access_level: string | null
+          ai_indexed: boolean | null
+          category: string | null
+          content: string | null
+          created_at: string | null
+          file_size: number | null
+          file_type: string | null
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          access_level?: string | null
+          ai_indexed?: boolean | null
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          access_level?: string | null
+          ai_indexed?: boolean | null
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      user_chats: {
+        Row: {
+          created_at: string | null
+          id: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
@@ -128,10 +292,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -246,6 +416,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
