@@ -1,0 +1,143 @@
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 9% 17%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 72.22% 50.59%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5% 64.9%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 85.7% 97.3%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", sans-serif;
+  }
+}
+
+/* Sidebar solid styling - remove any glass effects */
+[data-sidebar] {
+  background: hsl(var(--background)) !important;
+  backdrop-filter: none !important;
+  border-right: 1px solid hsl(var(--border));
+}
+
+/* Compact mode styles */
+.compact-mode {
+  --spacing-scale: 0.75;
+}
+
+.compact-mode .space-y-6 > * + * {
+  margin-top: calc(1.5rem * var(--spacing-scale, 1));
+}
+
+.compact-mode .space-y-4 > * + * {
+  margin-top: calc(1rem * var(--spacing-scale, 1));
+}
+
+.compact-mode .space-y-3 > * + * {
+  margin-top: calc(0.75rem * var(--spacing-scale, 1));
+}
+
+.compact-mode .p-4 {
+  padding: calc(1rem * var(--spacing-scale, 1));
+}
+
+.compact-mode .p-8 {
+  padding: calc(2rem * var(--spacing-scale, 1));
+}
+
+.compact-mode .py-8 {
+  padding-top: calc(2rem * var(--spacing-scale, 1));
+  padding-bottom: calc(2rem * var(--spacing-scale, 1));
+}
+
+.compact-mode .px-4 {
+  padding-left: calc(1rem * var(--spacing-scale, 1));
+  padding-right: calc(1rem * var(--spacing-scale, 1));
+}
+
+/* Chat scrollbar styling */
+.chat-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground)) transparent;
+}
+
+.chat-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground));
+  border-radius: 3px;
+  opacity: 0.5;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  opacity: 1;
+}
+
+/* Smooth transitions */
+.transition-all-smooth {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Remove any glass/blur effects from headers */
+.backdrop-blur {
+  backdrop-filter: none !important;
+}
+
+/* Ensure solid backgrounds */
+.bg-background\/95 {
+  background: hsl(var(--background)) !important;
+}
