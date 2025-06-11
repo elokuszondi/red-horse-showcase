@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Menu, History, Settings, FileText, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import SettingsDialog from '@/components/SettingsDialog';
 import Header from '@/components/Header';
 import AuthWrapper from '@/components/auth/AuthWrapper';
 import { useAuth } from '@/contexts/AuthContext';
+import AdvancedIncidentAnalyticsDashboard from '@/components/AdvancedIncidentAnalyticsDashboard';
 
 const Index = () => {
   const { user } = useAuth();
@@ -40,7 +40,7 @@ const Index = () => {
       case 'thinktank':
         return <ThinkTankSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />;
       case 'analytics':
-        return <AnalyticsDashboard />;
+        return null; // No sidebar for analytics
       default:
         return null;
     }
@@ -164,9 +164,9 @@ const Index = () => {
               </Button>
             </div>
 
-            {/* Chat Interface */}
+            {/* Content Area */}
             {activePanel === 'chat' && <ChatInterface />}
-            {activePanel === 'analytics' && <AnalyticsDashboard />}
+            {activePanel === 'analytics' && <AdvancedIncidentAnalyticsDashboard />}
             {(activePanel === 'knowledge' || activePanel === 'thinktank') && (
               <div className="flex-1 flex items-center justify-center bg-white">
                 <div className="text-center text-gray-500">
