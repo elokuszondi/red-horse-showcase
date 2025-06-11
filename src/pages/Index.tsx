@@ -36,9 +36,9 @@ const Index = () => {
           />
         );
       case 'knowledge':
-        return <KnowledgeSidebar className="w-80" />;
+        return <KnowledgeSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />;
       case 'thinktank':
-        return <ThinkTankSidebar className="w-80" />;
+        return <ThinkTankSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />;
       case 'analytics':
         return <AnalyticsDashboard />;
       default:

@@ -6,11 +6,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { useChatContext } from '@/contexts/ChatContext';
 import { usePersistentChat } from '@/contexts/PersistentChatContext';
 import { useAuth } from '@/contexts/AuthContext';
-import FileUpload from '@/components/FileUpload';
+import FileUpload, { type UploadedFile } from '@/components/FileUpload';
 
 const ChatInput = () => {
   const [input, setInput] = useState('');
   const [showFileUpload, setShowFileUpload] = useState(false);
+  const [files, setFiles] = useState<UploadedFile[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { sendMessage, isTyping } = useChatContext();
   const { 
@@ -82,8 +83,10 @@ const ChatInput = () => {
       {showFileUpload && (
         <div className="absolute bottom-full left-0 right-0 mb-2">
           <FileUpload 
-            onUploadComplete={() => setShowFileUpload(false)}
-            onClose={() => setShowFileUpload(false)}
+            files={files}
+            onFilesChange={setFiles}
+            maxFiles={5}
+            maxSizeMB={10}
           />
         </div>
       )}
