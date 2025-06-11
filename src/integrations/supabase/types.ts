@@ -170,6 +170,66 @@ export type Database = {
         }
         Relationships: []
       }
+      document_registry: {
+        Row: {
+          created_at: string | null
+          file_hash: string | null
+          file_type: string
+          filename: string
+          github_path: string
+          github_url: string
+          id: string
+          last_updated: string | null
+          metadata: Json | null
+          vector_storage_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_hash?: string | null
+          file_type: string
+          filename: string
+          github_path: string
+          github_url: string
+          id?: string
+          last_updated?: string | null
+          metadata?: Json | null
+          vector_storage_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_hash?: string | null
+          file_type?: string
+          filename?: string
+          github_path?: string
+          github_url?: string
+          id?: string
+          last_updated?: string | null
+          metadata?: Json | null
+          vector_storage_id?: string
+        }
+        Relationships: []
+      }
+      guest_sessions: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_count: number | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_count?: number | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_count?: number | null
+          session_id?: string
+        }
+        Relationships: []
+      }
       internal_documents: {
         Row: {
           access_level: string | null

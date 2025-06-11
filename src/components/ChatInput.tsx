@@ -1,136 +1,138 @@
 
-import { useState, useRef, KeyboardEvent } from 'react';
-import { Send } from 'lucide-react';
+import React, { useState, useRef, KeyboardEvent } from 'react';
+import { Send, Paperclip, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useChatContext } from '@/contexts/ChatContext';
+import { usePersistentChat } from '@/contexts/PersistentChatContext';
 import { useAuth } from '@/contexts/AuthContext';
-import FileUpload, { UploadedFile } from '@/components/FileUpload';
-import GuestModePrompt from './GuestModePrompt';
+import FileUpload from '@/components/FileUpload';
 
 const ChatInput = () => {
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [files, setFiles] = useState<UploadedFile[]>([]);
-  const [guestQueryCount, setGuestQueryCount] = useState(0);
-  const [showGuestPrompt, setShowGuestPrompt] = useState(false);
+  const [showFileUpload, setShowFileUpload] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { sendMessage } = useChatContext();
+  const { sendMessage, isTyping } = useChatContext();
+  const { 
+    addMessageToCurrentChat, 
+    currentChatId, 
+    createNewChat 
+  } = usePersistentChat();
   const { user } = useAuth();
 
-  const handleSubmit = async () => {
-    if ((!input.trim() && files.length === 0) || isLoading) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isTyping) return;
 
-    // Handle guest mode limitations
-    if (!user) {
-      if (guestQueryCount >= 3) {
-        setShowGuestPrompt(true);
-        return;
+    const messageContent = input.trim();
+    setInput('');
+
+    // For authenticated users, use persistent chat
+    if (user) {
+      let activeChatId = currentChatId;
+      
+      // Create new chat if none exists
+      if (!activeChatId) {
+        activeChatId = await createNewChat();
+        if (!activeChatId) {
+          console.error('Failed to create new chat');
+          return;
+        }
       }
-      setGuestQueryCount(prev => prev + 1);
+
+      // Add user message to persistent chat
+      await addMessageToCurrentChat('user', messageContent);
+
+      // Send message through regular chat context for AI response
+      await sendMessage(messageContent);
+    } else {
+      // For guests, use regular chat context
+      await sendMessage(messageContent);
     }
 
-    const message = input.trim();
-    const attachedFiles = files.length > 0 ? files : undefined;
-    
-    setInput('');
-    setFiles([]);
-    setIsLoading(true);
-
+    // Auto-resize textarea
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
-
-    try {
-      await sendMessage(message, attachedFiles);
-      
-      // Show guest prompt after 2nd query
-      if (!user && guestQueryCount === 2) {
-        setShowGuestPrompt(true);
-      }
-    } finally {
-      setIsLoading(false);
-    }
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit();
+      handleSubmit(e);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
     
+    // Auto-resize textarea
     const textarea = e.target;
     textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
   };
 
-  const charCount = input.length;
-  const maxChars = 2000;
-  const showCharCount = charCount > maxChars * 0.8;
-  const canSend = (input.trim() || files.length > 0) && !isLoading && charCount <= maxChars;
+  const stopGeneration = () => {
+    // Implementation would depend on your AI service
+    console.log('Stopping generation...');
+  };
 
   return (
-    <div className="space-y-3">
-      {/* Guest Mode Prompt */}
-      {showGuestPrompt && (
-        <GuestModePrompt 
-          onDismiss={() => setShowGuestPrompt(false)}
-          queryCount={guestQueryCount}
-        />
-      )}
-
-      {/* Character Counter */}
-      {showCharCount && (
-        <div className="flex justify-end">
-          <span className={`text-xs ${
-            charCount > maxChars ? 'text-red-500' : 'text-gray-500'
-          }`}>
-            {charCount}/{maxChars}
-          </span>
+    <div className="relative">
+      {showFileUpload && (
+        <div className="absolute bottom-full left-0 right-0 mb-2">
+          <FileUpload 
+            onUploadComplete={() => setShowFileUpload(false)}
+            onClose={() => setShowFileUpload(false)}
+          />
         </div>
       )}
-
-      {/* File Upload */}
-      <FileUpload files={files} onFilesChange={setFiles} />
-
-      {/* Input Area */}
-      <div className="relative bg-gray-50 rounded-xl border border-gray-200 focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/10 transition-all-smooth">
-        <Textarea
-          ref={textareaRef}
-          value={input}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder={
-            !user && guestQueryCount >= 3 
-              ? "Sign in to continue chatting..." 
-              : "Ask about incidents, search knowledge base, find solutions..."
-          }
-          className="min-h-[52px] max-h-[120px] resize-none border-0 bg-transparent px-4 py-3 pr-12 focus:ring-0 focus:ring-offset-0 placeholder:text-gray-500"
-          disabled={isLoading || (!user && guestQueryCount >= 3)}
-        />
-        
-        <div className="absolute bottom-2 right-2">
+      
+      <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+        <div className="flex-1 relative">
+          <Textarea
+            ref={textareaRef}
+            value={input}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyPress}
+            placeholder="Type your message..."
+            className="min-h-[48px] max-h-[120px] resize-none pr-12 py-3"
+            disabled={isTyping}
+          />
+          
           <Button
-            onClick={handleSubmit}
-            disabled={!canSend || (!user && guestQueryCount >= 3)}
+            type="button"
+            variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-all-smooth"
+            onClick={() => setShowFileUpload(!showFileUpload)}
+            className="absolute right-2 top-2 h-8 w-8 p-0"
+            disabled={isTyping}
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        {isTyping ? (
+          <Button
+            type="button"
+            onClick={stopGeneration}
+            variant="outline"
+            size="default"
+            className="h-12 px-4"
+          >
+            <Square className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            disabled={!input.trim()}
+            size="default"
+            className="h-12 px-4"
           >
             <Send className="h-4 w-4" />
           </Button>
-        </div>
-      </div>
-      
-      <p className="text-xs text-gray-500 text-center">
-        {!user && guestQueryCount > 0 && (
-          <span className="mr-2">Guest mode: {guestQueryCount}/3 queries</span>
         )}
-        Press Enter to send, Shift+Enter for new line
-      </p>
+      </form>
     </div>
   );
 };

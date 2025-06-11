@@ -1,6 +1,8 @@
 
 import { useEffect, useRef } from 'react';
 import { useChatContext } from '@/contexts/ChatContext';
+import { usePersistentChat } from '@/contexts/PersistentChatContext';
+import { useAuth } from '@/contexts/AuthContext';
 import MessageBubble from '@/components/MessageBubble';
 import ChatInput from '@/components/ChatInput';
 import TypingIndicator from '@/components/TypingIndicator';
@@ -8,7 +10,12 @@ import EmptyState from '@/components/EmptyState';
 
 const ChatInterface = () => {
   const { messages, isTyping } = useChatContext();
+  const { currentMessages, currentChatId } = usePersistentChat();
+  const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Use persistent messages if user is authenticated and has a current chat
+  const displayMessages = user && currentChatId ? currentMessages : messages;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -16,17 +23,17 @@ const ChatInterface = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isTyping]);
+  }, [displayMessages, isTyping]);
 
   return (
     <div className="flex-1 flex flex-col bg-white">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto chat-scrollbar">
-        {messages.length === 0 ? (
+        {displayMessages.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-            {messages.map((message) => (
+            {displayMessages.map((message) => (
               <MessageBubble 
                 key={message.id} 
                 message={message}
