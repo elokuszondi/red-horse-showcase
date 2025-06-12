@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Menu, History, Settings, FileText, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,12 +15,23 @@ import Header from '@/components/Header';
 import AuthWrapper from '@/components/auth/AuthWrapper';
 import { useAuth } from '@/contexts/AuthContext';
 import AdvancedIncidentAnalyticsDashboard from '@/components/AdvancedIncidentAnalyticsDashboard';
+import { useAutoPrompting } from '@/hooks/useAutoPrompting';
+import InsightsGrid from '@/components/InsightsGrid';
 
 const Index = () => {
   const { user } = useAuth();
   const [legacySidebarOpen, setLegacySidebarOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<'chat' | 'knowledge' | 'thinktank' | 'analytics'>('chat');
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Auto-prompting for analytics panel
+  const { 
+    insights: analyticsInsights, 
+    isLoading: analyticsInsightsLoading, 
+    error: analyticsInsightsError, 
+    refreshInsights: refreshAnalyticsInsights, 
+    lastUpdated: analyticsLastUpdated 
+  } = useAutoPrompting('analytics');
 
   const renderLegacySidebar = () => {
     switch (activePanel) {
@@ -47,6 +57,24 @@ const Index = () => {
       default:
         return null;
     }
+  };
+
+  const renderAnalyticsContent = () => {
+    return (
+      <div className="p-6 space-y-6">
+        {/* Auto-Generated Analytics Insights */}
+        <InsightsGrid
+          insights={analyticsInsights}
+          isLoading={analyticsInsightsLoading}
+          error={analyticsInsightsError}
+          onRefresh={refreshAnalyticsInsights}
+          lastUpdated={analyticsLastUpdated}
+        />
+        
+        {/* Existing Analytics Dashboard */}
+        <AdvancedIncidentAnalyticsDashboard />
+      </div>
+    );
   };
 
   return (
@@ -173,7 +201,7 @@ const Index = () => {
 
                   {/* Content Area */}
                   {activePanel === 'chat' && <ChatInterface />}
-                  {activePanel === 'analytics' && <AdvancedIncidentAnalyticsDashboard />}
+                  {activePanel === 'analytics' && renderAnalyticsContent()}
                   {(activePanel === 'knowledge' || activePanel === 'thinktank') && (
                     <div className="flex-1 flex items-center justify-center bg-white">
                       <div className="text-center text-gray-500">

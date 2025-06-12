@@ -7,12 +7,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { analyticsEngine, type AnalyticsData } from '@/services/analyticsEngine';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { useAutoPrompting } from '@/hooks/useAutoPrompting';
+import InsightsGrid from './InsightsGrid';
 
 const IncidentTrendsPage: React.FC = () => {
   const { user } = useAuth();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('12months');
+  
+  // Auto-prompting hook
+  const { 
+    insights, 
+    isLoading: insightsLoading, 
+    error: insightsError, 
+    refreshInsights, 
+    lastUpdated 
+  } = useAutoPrompting('incidents');
 
   useEffect(() => {
     if (user) {
@@ -84,6 +95,15 @@ const IncidentTrendsPage: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Auto-Generated Insights */}
+      <InsightsGrid
+        insights={insights}
+        isLoading={insightsLoading}
+        error={insightsError}
+        onRefresh={refreshInsights}
+        lastUpdated={lastUpdated}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
