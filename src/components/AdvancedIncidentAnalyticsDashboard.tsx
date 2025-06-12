@@ -91,8 +91,8 @@ const AdvancedIncidentAnalyticsDashboard = () => {
       const resolved = incident.ResolvedDateTime ? new Date(incident.ResolvedDateTime) : null;
       const closed = new Date(incident.ClosedDateTime);
       
-      const resolutionTime = resolved ? (resolved - created) / (1000 * 60 * 60) : null; // hours
-      const closureTime = (closed - created) / (1000 * 60 * 60); // hours
+      const resolutionTime = resolved ? (resolved.getTime() - created.getTime()) / (1000 * 60 * 60) : null; // hours
+      const closureTime = (closed.getTime() - created.getTime()) / (1000 * 60 * 60); // hours
       
       return {
         ...incident,
@@ -106,7 +106,7 @@ const AdvancedIncidentAnalyticsDashboard = () => {
     });
 
     // Category distribution
-    const categoryData = processedData.reduce((acc, incident) => {
+    const categoryData = processedData.reduce((acc: Record<string, number>, incident) => {
       acc[incident.Category] = (acc[incident.Category] || 0) + 1;
       return acc;
     }, {});
@@ -114,11 +114,11 @@ const AdvancedIncidentAnalyticsDashboard = () => {
     const categoryChartData = Object.entries(categoryData).map(([category, count]) => ({
       category,
       count,
-      percentage: ((count / processedData.length) * 100).toFixed(1)
+      percentage: ((count as number / processedData.length) * 100).toFixed(1)
     }));
 
     // Cause code analysis
-    const causeCodeData = processedData.reduce((acc, incident) => {
+    const causeCodeData = processedData.reduce((acc: Record<string, number>, incident) => {
       acc[incident.CauseCode] = (acc[incident.CauseCode] || 0) + 1;
       return acc;
     }, {});
@@ -129,7 +129,7 @@ const AdvancedIncidentAnalyticsDashboard = () => {
     }));
 
     // Monthly trends
-    const monthlyData = processedData.reduce((acc, incident) => {
+    const monthlyData = processedData.reduce((acc: Record<string, any>, incident) => {
       const month = incident.month;
       if (!acc[month]) {
         acc[month] = { month, created: 0, resolved: 0, avgResolutionTime: 0 };
@@ -141,10 +141,10 @@ const AdvancedIncidentAnalyticsDashboard = () => {
       return acc;
     }, {});
 
-    const monthlyChartData = Object.values(monthlyData).sort((a, b) => a.month.localeCompare(b.month));
+    const monthlyChartData = Object.values(monthlyData).sort((a: any, b: any) => a.month.localeCompare(b.month));
 
     // Source analysis
-    const sourceData = processedData.reduce((acc, incident) => {
+    const sourceData = processedData.reduce((acc: Record<string, number>, incident) => {
       acc[incident.Source] = (acc[incident.Source] || 0) + 1;
       return acc;
     }, {});
@@ -169,7 +169,7 @@ const AdvancedIncidentAnalyticsDashboard = () => {
       .filter(i => i.resolutionTime !== null)
       .map(i => ({
         incident: i.RecId.substring(0, 8),
-        resolutionTime: parseFloat(i.resolutionTime.toFixed(2)),
+        resolutionTime: parseFloat((i.resolutionTime as number).toFixed(2)),
         category: i.Category
       }));
 

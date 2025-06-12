@@ -1,13 +1,15 @@
 
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, Bot } from 'lucide-react';
+import { LogOut, User, Bot, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import SettingsDialog from '@/components/SettingsDialog';
 import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
 
 const Header = () => {
   const { user, signOut } = useAuth();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -32,7 +34,15 @@ const Header = () => {
 
         {/* Right side - User actions */}
         <div className="flex items-center gap-2">
-          <SettingsDialog />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setSettingsOpen(true)}
+            className="flex items-center gap-2 h-8"
+          >
+            <Settings className="h-3 w-3" />
+            <span className="hidden sm:inline text-xs">Settings</span>
+          </Button>
           
           {user && (
             <div className="flex items-center gap-2">
@@ -54,6 +64,11 @@ const Header = () => {
           )}
         </div>
       </div>
+      
+      <SettingsDialog 
+        open={settingsOpen} 
+        onOpenChange={setSettingsOpen} 
+      />
     </header>
   );
 };
